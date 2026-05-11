@@ -42,9 +42,9 @@ def lay_du_lieu():
     return df
 
 # --- GIAO DIỆN TABS ---
-tab1, tab2, tab3, tab4 = st.tabs(["🥤 Trà Tắc", "🧺 Giặt Sấy", "🛠️ Sửa Đồ", "📈 Báo Cáo Tổng"])
+tab1, tab2, tab3, tab4 = st.tabs(["🥤 Trà Tắc", "🧺 Giặt Sấy", "🛠️ Sửa Đồ", "📈 Tổng thu"])
 
-
+# --- HÀM HIỂN THỊ LỊCH SỬ NHANH DƯỚI MỖI TAB ---
 def hien_thi_lich_su_tab(df, ten_dv):
     if not df.empty:
         st.write(f"---")
@@ -60,12 +60,14 @@ with tab1:
     
     col_a, col_b = st.columns(2)
     with col_a:
-        so_tien = st.number_input("Số tiền (k):", min_value=0, step=1, value=ds_mon[chon_mon], key="amt_tra_tac")
+        # Ép làm mới ô số tiền bằng cách thay đổi key theo món đang chọn
+        so_tien = st.number_input("Số tiền (k):", min_value=0, step=1, value=ds_mon[chon_mon], key=f"amt_tra_tac_{chon_mon}")
         hinh_thuc = st.radio("Thanh toán:", ["Tiền mặt", "Chuyển khoản"], horizontal=True, key="ht_tra_tac")
     with col_b:
         loai = st.radio("Loại giao dịch:", ["Thu (Doanh thu)", "Chi (Tiền ra)"], key="loai_tra_tac")
         ten_mac_dinh = "Khách lẻ" if chon_mon == "Tự nhập số" else chon_mon.split(" (")[0]
-        ten_khach = st.text_input("Ghi chú:", value=ten_mac_dinh, key="khach_tra_tac")
+        # Ép làm mới ô ghi chú
+        ten_khach = st.text_input("Ghi chú:", value=ten_mac_dinh, key=f"khach_tra_tac_{chon_mon}")
 
     if st.button("Ghi sổ Trà Tắc", use_container_width=True, type="primary"):
         if so_tien > 0:
@@ -110,9 +112,9 @@ with tab3:
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Sửa đồ")
 
-# --- TAB 4: BÁO CÁO (ĐỔI BIỂU ĐỒ DOANH THU & THÊM LỌC NGÀY) ---
+# --- TAB 4: BÁO CÁO ---
 with tab4:
-    st.header("📈 Báo Cáo Doanh Thu")
+    st.header("📈 Tổng Doanh Thu")
     df = lay_du_lieu()
     if not df.empty:
         df['Ngày'] = df['Thời Gian'].dt.date
@@ -123,7 +125,7 @@ with tab4:
         ngay_min = df['Ngày'].min()
         ngay_max = df['Ngày'].max()
         
-        # Cho phép chọn khoảng ngày (MỞ KHÓA GIỚI HẠN TƯƠNG LAI)
+        
         ngay_chon = st.date_input("Lọc báo cáo theo ngày:", value=(ngay_min, ngay_max))
         
         # Xử lý lọc dữ liệu dựa trên ngày sếp chọn
