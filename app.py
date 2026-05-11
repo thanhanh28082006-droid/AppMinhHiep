@@ -55,7 +55,7 @@ def hien_thi_lich_su_tab(df, ten_dv):
 # --- TAB 1: TRÀ TẮC ---
 with tab1:
     st.header("🥤 Quản lý Trà Tắc")
-    ds_mon = {"Chọn đồ uông ": 0, "Trà tắc (10k)": 10, "Nước cam (20k)": 20, "Trà chanh (15k)": 15}
+    ds_mon = {"Chọn Đồ Uống": 0, "Trà tắc (10k)": 10, "Nước cam (20k)": 20, "Trà chanh (15k)": 15}
     chon_mon = st.selectbox("⚡ Chọn món nhanh:", list(ds_mon.keys()))
     
     col_a, col_b = st.columns(2)
@@ -123,8 +123,8 @@ with tab4:
         ngay_min = df['Ngày'].min()
         ngay_max = df['Ngày'].max()
         
-        # Cho phép chọn khoảng ngày (Từ ngày - Đến ngày)
-        ngay_chon = st.date_input("Lọc báo cáo theo ngày:", value=(ngay_min, ngay_max), min_value=ngay_min, max_value=ngay_max)
+        # Cho phép chọn khoảng ngày (MỞ KHÓA GIỚI HẠN TƯƠNG LAI)
+        ngay_chon = st.date_input("Lọc báo cáo theo ngày:", value=(ngay_min, ngay_max))
         
         # Xử lý lọc dữ liệu dựa trên ngày sếp chọn
         if len(ngay_chon) == 2:
