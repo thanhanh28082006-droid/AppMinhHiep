@@ -44,7 +44,7 @@ def lay_du_lieu():
 # --- GIAO DIỆN TABS ---
 tab1, tab2, tab3, tab4 = st.tabs(["🥤 Trà Tắc", "🧺 Giặt Sấy", "🛠️ Sửa Đồ", "📈 Báo Cáo Tổng"])
 
-# --- HÀM HIỂN THỊ LỊCH SỬ NHANH DƯỚI MỖI TAB ---
+
 def hien_thi_lich_su_tab(df, ten_dv):
     if not df.empty:
         st.write(f"---")
@@ -55,7 +55,7 @@ def hien_thi_lich_su_tab(df, ten_dv):
 # --- TAB 1: TRÀ TẮC ---
 with tab1:
     st.header("🥤 Quản lý Trà Tắc")
-    ds_mon = {"Tự nhập số": 0, "Trà tắc (10k)": 10, "Nước cam (20k)": 20, "Trà chanh (15k)": 15}
+    ds_mon = {"Chọn đồ uông ": 0, "Trà tắc (10k)": 10, "Nước cam (20k)": 20, "Trà chanh (15k)": 15}
     chon_mon = st.selectbox("⚡ Chọn món nhanh:", list(ds_mon.keys()))
     
     col_a, col_b = st.columns(2)
@@ -110,29 +110,52 @@ with tab3:
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Sửa đồ")
 
-# --- TAB 4: BÁO CÁO (ĐỔI BIỂU ĐỒ DOANH THU) ---
+# --- TAB 4: BÁO CÁO (ĐỔI BIỂU ĐỒ DOANH THU & THÊM LỌC NGÀY) ---
 with tab4:
     st.header("📈 Báo Cáo Doanh Thu")
     df = lay_du_lieu()
     if not df.empty:
-        # Metrics tổng
-        thu_all = df[df['Loại'] == 'Thu']['Số Tiền'].sum()
-        chi_all = df[df['Loại'] == 'Chi']['Số Tiền'].sum()
-        
-        c1, c2, c3 = st.columns(3)
-        c1.metric("💰 TỔNG DOANH THU", f"{thu_all:,.0f}đ")
-        c2.metric("🔻 TỔNG CHI", f"{chi_all:,.0f}đ")
-        c3.metric("💎 LỢI NHUẬN", f"{thu_all - chi_all:,.0f}đ")
-        
-        st.write("---")
-        # BIỂU ĐỒ DOANH THU (Cột)
-        st.subheader("📊 Biểu đồ doanh thu hàng ngày")
         df['Ngày'] = df['Thời Gian'].dt.date
-        df_doanh_thu = df[df['Loại'] == 'Thu'].groupby(['Ngày', 'Dịch Vụ'])['Số Tiền'].sum().reset_index()
         
-        fig = px.bar(df_doanh_thu, x='Ngày', y='Số Tiền', color='Dịch Vụ', 
-                     title="Doanh thu theo dịch vụ", barmode='stack', text_auto='.2s')
-        st.plotly_chart(fig, use_container_width=True)
+        # --- BỘ LỌC NGÀY THÁNG ---
+        st.write("---")
+        st.subheader("📅 Chọn khoảng thời gian")
+        ngay_min = df['Ngày'].min()
+        ngay_max = df['Ngày'].max()
+        
+        # Cho phép chọn khoảng ngày (Từ ngày - Đến ngày)
+        ngay_chon = st.date_input("Lọc báo cáo theo ngày:", value=(ngay_min, ngay_max), min_value=ngay_min, max_value=ngay_max)
+        
+        # Xử lý lọc dữ liệu dựa trên ngày sếp chọn
+        if len(ngay_chon) == 2:
+            df_loc = df[(df['Ngày'] >= ngay_chon[0]) & (df['Ngày'] <= ngay_chon[1])]
+        elif len(ngay_chon) == 1:
+            df_loc = df[df['Ngày'] == ngay_chon[0]]
+        else:
+            df_loc = df.copy()
 
-        st.subheader("📑 Lịch sử tất cả giao dịch")
-        st.dataframe(df[['Thời Gian', 'Dịch Vụ', 'Loại', 'Hình Thức', 'Số Tiền']].sort_values(by='Thời Gian', ascending=False), use_container_width=True)
+        if not df_loc.empty:
+            # Metrics tổng (chỉ tính trong ngày đã lọc)
+            thu_all = df_loc[df_loc['Loại'] == 'Thu']['Số Tiền'].sum()
+            chi_all = df_loc[df_loc['Loại'] == 'Chi']['Số Tiền'].sum()
+            
+            c1, c2, c3 = st.columns(3)
+            c1.metric("💰 TỔNG DOANH THU", f"{thu_all:,.0f}đ")
+            c2.metric("🔻 TỔNG CHI", f"{chi_all:,.0f}đ")
+            c3.metric("💎 LỢI NHUẬN", f"{thu_all - chi_all:,.0f}đ")
+            
+            st.write("---")
+            # BIỂU ĐỒ DOANH THU (Cột)
+            st.subheader("📊 Biểu đồ doanh thu")
+            df_doanh_thu = df_loc[df_loc['Loại'] == 'Thu'].groupby(['Ngày', 'Dịch Vụ'])['Số Tiền'].sum().reset_index()
+            
+            fig = px.bar(df_doanh_thu, x='Ngày', y='Số Tiền', color='Dịch Vụ', 
+                         title="Doanh thu theo dịch vụ", barmode='stack', text_auto='.2s')
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.subheader("📑 Lịch sử giao dịch")
+            st.dataframe(df_loc[['Thời Gian', 'Dịch Vụ', 'Loại', 'Hình Thức', 'Số Tiền', 'Tên Khách']].sort_values(by='Thời Gian', ascending=False), use_container_width=True)
+        else:
+            st.warning("Không có giao dịch nào trong khoảng thời gian đã chọn.")
+    else:
+        st.write("Chưa có dữ liệu.")
