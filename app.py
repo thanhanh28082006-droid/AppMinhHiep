@@ -15,71 +15,65 @@ st.markdown("---")
 
 LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYvwv9oTw/edit?gid=0#gid=0"
 
-
 @st.cache_resource
 def ket_noi_sheets():
+    # Kết nối qua Secrets (GitHub/Streamlit Cloud)
     creds_dict = st.secrets["gcp_service_account"]
     gc = gspread.service_account_from_dict(creds_dict)
     sh = gc.open_by_url(LINK_GOOGLE_SHEETS)
     return sh.sheet1
 
-
 try:
     worksheet = ket_noi_sheets()
 except Exception as e:
-    st.error("Lỗi kết nối! Hãy kiểm tra lại Secrets hoặc Link Sheets.")
+    st.error(f"Lỗi kết nối chi tiết: {e}")
     st.stop()
-
 
 def lay_du_lieu():
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
     if not df.empty:
+        # Chuẩn hóa tên cột
         df.columns = [str(col).strip().title() for col in df.columns]
         df.columns = ['ID' if col == 'Id' else col for col in df.columns]
+        # Xử lý định dạng
         df['Số Tiền'] = pd.to_numeric(df['Số Tiền'], errors='coerce').fillna(0)
         df['Thời Gian'] = pd.to_datetime(df['Thời Gian'], format="%d/%m/%Y %H:%M:%S", errors='coerce')
     return df
 
-
 # --- GIAO DIỆN TABS ---
 tab1, tab2, tab3, tab4 = st.tabs(["🥤 Trà Tắc", "🧺 Giặt Sấy", "🛠️ Sửa Đồ", "📈 Báo Cáo Tổng"])
 
-# --- TAB 1: TRÀ TẮC (CÓ CHỌN MÓN NHANH) ---
+# --- HÀM HIỂN THỊ LỊCH SỬ NHANH DƯỚI MỖI TAB ---
+def hien_thi_lich_su_tab(df, ten_dv):
+    if not df.empty:
+        st.write(f"---")
+        st.write(f"🔔 **Đơn hàng {ten_dv} vừa nhập:**")
+        df_loc = df[df['Dịch Vụ'] == ten_dv].sort_values(by='Thời Gian', ascending=False).head(5)
+        st.dataframe(df_loc[['Thời Gian', 'Loại', 'Hình Thức', 'Tên Khách', 'Số Tiền']], use_container_width=True)
+
+# --- TAB 1: TRÀ TẮC ---
 with tab1:
     st.header("🥤 Quản lý Trà Tắc")
-
-    # Menu chọn món nhanh
-    st.subheader("⚡ Chọn món nhanh")
-    ds_mon = {
-        "Tự nhập số tiền": 0,
-        "Trà tắc (10k)": 10,
-        "Nước cam (20k)": 20,
-        "Trà chanh (15k)": 15
-    }
-    chon_mon = st.selectbox("Tích chọn món khách gọi:", list(ds_mon.keys()))
-
-    # Lấy giá và tên món mặc định
-    gia_mac_dinh = ds_mon[chon_mon]
-    ten_mac_dinh = "Khách lẻ" if chon_mon == "Tự nhập số tiền" else chon_mon.split(" (")[0]
-
-    st.markdown("---")
+    ds_mon = {"Tự nhập số": 0, "Trà tắc (10k)": 10, "Nước cam (20k)": 20, "Trà chanh (15k)": 15}
+    chon_mon = st.selectbox("⚡ Chọn món nhanh:", list(ds_mon.keys()))
+    
     col_a, col_b = st.columns(2)
     with col_a:
-        so_tien = st.number_input("Số tiền (k):", min_value=0, step=1, value=gia_mac_dinh, key="amt_tra_tac")
+        so_tien = st.number_input("Số tiền (k):", min_value=0, step=1, value=ds_mon[chon_mon], key="amt_tra_tac")
         hinh_thuc = st.radio("Thanh toán:", ["Tiền mặt", "Chuyển khoản"], horizontal=True, key="ht_tra_tac")
     with col_b:
         loai = st.radio("Loại giao dịch:", ["Thu (Doanh thu)", "Chi (Tiền ra)"], key="loai_tra_tac")
-        ten_khach = st.text_input("Ghi chú / Tên khách:", value=ten_mac_dinh, key="khach_tra_tac")
+        ten_mac_dinh = "Khách lẻ" if chon_mon == "Tự nhập số" else chon_mon.split(" (")[0]
+        ten_khach = st.text_input("Ghi chú:", value=ten_mac_dinh, key="khach_tra_tac")
 
     if st.button("Ghi sổ Trà Tắc", use_container_width=True, type="primary"):
         if so_tien > 0:
-            thoi_gian = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            loai_clean = "Thu" if "Thu" in loai else "Chi"
-            worksheet.append_row(
-                [str(uuid.uuid4())[:8], thoi_gian, "Trà tắc", loai_clean, hinh_thuc, ten_khach, so_tien * 1000])
-            st.success(f"✅ Đã ghi: {loai_clean} {ten_khach} - {so_tien}k ({hinh_thuc})")
+            worksheet.append_row([str(uuid.uuid4())[:8], datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Trà tắc", "Thu" if "Thu" in loai else "Chi", hinh_thuc, ten_khach, so_tien * 1000])
+            st.success("Đã lưu thành công!")
             st.rerun()
+    
+    hien_thi_lich_su_tab(lay_du_lieu(), "Trà tắc")
 
 # --- TAB 2: GIẶT SẤY ---
 with tab2:
@@ -90,16 +84,14 @@ with tab2:
         hinh_thuc_gs = st.radio("Thanh toán:", ["Tiền mặt", "Chuyển khoản"], horizontal=True, key="ht_gs")
     with col_b:
         loai_gs = st.radio("Loại giao dịch:", ["Thu (Doanh thu)", "Chi (Tiền ra)"], key="loai_gs")
-        ten_khach_gs = st.text_input("Tên khách / Ghi chú:", value="Khách lẻ", key="khach_gs")
+        ten_khach_gs = st.text_input("Tên khách:", value="Khách lẻ", key="khach_gs")
 
     if st.button("Ghi sổ Giặt Sấy", use_container_width=True, type="primary"):
         if so_tien_gs > 0:
-            thoi_gian = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            loai_c = "Thu" if "Thu" in loai_gs else "Chi"
-            worksheet.append_row(
-                [str(uuid.uuid4())[:8], thoi_gian, "Giặt sấy", loai_c, hinh_thuc_gs, ten_khach_gs, so_tien_gs * 1000])
-            st.success(f"✅ Đã lưu đơn Giặt Sấy {so_tien_gs}k")
+            worksheet.append_row([str(uuid.uuid4())[:8], datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Giặt sấy", "Thu" if "Thu" in loai_gs else "Chi", hinh_thuc_gs, ten_khach_gs, so_tien_gs * 1000])
             st.rerun()
+    
+    hien_thi_lich_su_tab(lay_du_lieu(), "Giặt sấy")
 
 # --- TAB 3: SỬA ĐỒ ---
 with tab3:
@@ -113,45 +105,34 @@ with tab3:
 
     if st.button("Ghi sổ Sửa Đồ", use_container_width=True, type="primary"):
         if so_tien_sd > 0:
-            thoi_gian = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            worksheet.append_row(
-                [str(uuid.uuid4())[:8], thoi_gian, "Sửa đồ", "Thu", hinh_thuc_sd, ten_khach_sd, so_tien_sd * 1000])
-            st.success(f"✅ Đã lưu đơn Sửa Đồ {so_tien_sd}k")
+            worksheet.append_row([str(uuid.uuid4())[:8], datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Sửa đồ", "Thu", hinh_thuc_sd, ten_khach_sd, so_tien_sd * 1000])
             st.rerun()
+    
+    hien_thi_lich_su_tab(lay_du_lieu(), "Sửa đồ")
 
-# --- TAB 4: BÁO CÁO TỔNG ---
+# --- TAB 4: BÁO CÁO (ĐỔI BIỂU ĐỒ DOANH THU) ---
 with tab4:
-    st.header("📈 Báo Cáo Doanh Thu & Lợi Nhuận")
+    st.header("📈 Báo Cáo Doanh Thu")
     df = lay_du_lieu()
     if not df.empty:
-        dich_vus = ["Trà tắc", "Giặt sấy", "Sửa đồ"]
-        tong_ln = 0
-        cols = st.columns(3)
-        for i, dv in enumerate(dich_vus):
-            with cols[i]:
-                st.subheader(f"{dv}")
-                thu = df[(df['Dịch Vụ'] == dv) & (df['Loại'] == 'Thu')]['Số Tiền'].sum()
-                chi = df[(df['Dịch Vụ'] == dv) & (df['Loại'] == 'Chi')]['Số Tiền'].sum()
-                tm = df[(df['Dịch Vụ'] == dv) & (df['Hình Thức'] == 'Tiền mặt') & (df['Loại'] == 'Thu')][
-                    'Số Tiền'].sum()
-                ck = df[(df['Dịch Vụ'] == dv) & (df['Hình Thức'] == 'Chuyển khoản') & (df['Loại'] == 'Thu')][
-                    'Số Tiền'].sum()
-                ln = thu - chi
-                tong_ln += ln
-                st.write(f"💵 Tiền mặt: **{tm:,.0f}đ**")
-                st.write(f"💳 Chuyển khoản: **{ck:,.0f}đ**")
-                st.write(f"🔻 Tổng Chi: **{chi:,.0f}đ**")
-                st.metric(f"💰 Lợi nhuận", f"{ln:,.0f}đ")
-
-        st.divider()
-        st.metric("💎 TỔNG LỢI NHUẬN CỬA HÀNG", f"{tong_ln:,.0f}đ")
-
+        # Metrics tổng
+        thu_all = df[df['Loại'] == 'Thu']['Số Tiền'].sum()
+        chi_all = df[df['Loại'] == 'Chi']['Số Tiền'].sum()
+        
+        c1, c2, c3 = st.columns(3)
+        c1.metric("💰 TỔNG DOANH THU", f"{thu_all:,.0f}đ")
+        c2.metric("🔻 TỔNG CHI", f"{chi_all:,.0f}đ")
+        c3.metric("💎 LỢI NHUẬN", f"{thu_all - chi_all:,.0f}đ")
+        
+        st.write("---")
+        # BIỂU ĐỒ DOANH THU (Cột)
+        st.subheader("📊 Biểu đồ doanh thu hàng ngày")
         df['Ngày'] = df['Thời Gian'].dt.date
-        df_ngay = df.groupby(['Ngày', 'Loại'])['Số Tiền'].sum().unstack(fill_value=0)
-        if 'Thu' not in df_ngay: df_ngay['Thu'] = 0
-        if 'Chi' not in df_ngay: df_ngay['Chi'] = 0
-        df_ngay['Lợi Nhuận'] = df_ngay['Thu'] - df_ngay['Chi']
-        fig = px.line(df_ngay.reset_index(), x='Ngày', y='Lợi Nhuận', title="Biểu đồ lợi nhuận theo ngày")
+        df_doanh_thu = df[df['Loại'] == 'Thu'].groupby(['Ngày', 'Dịch Vụ'])['Số Tiền'].sum().reset_index()
+        
+        fig = px.bar(df_doanh_thu, x='Ngày', y='Số Tiền', color='Dịch Vụ', 
+                     title="Doanh thu theo dịch vụ", barmode='stack', text_auto='.2s')
         st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.write("Chưa có dữ liệu.")
+
+        st.subheader("📑 Lịch sử tất cả giao dịch")
+        st.dataframe(df[['Thời Gian', 'Dịch Vụ', 'Loại', 'Hình Thức', 'Số Tiền']].sort_values(by='Thời Gian', ascending=False), use_container_width=True)
