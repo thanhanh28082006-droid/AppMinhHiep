@@ -1,7 +1,7 @@
 import streamlit as st
 import gspread
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import plotly.express as px
 
@@ -9,11 +9,11 @@ import plotly.express as px
 st.set_page_config(page_title="Tiệm Giặt Sấy Minh Hiệp", page_icon="💰", layout="wide")
 
 st.title("🏪 Tiệm Giặt Sấy Minh Hiệp")
-bay_gio = datetime.now()
+bay_gio = datetime.now() + timedelta(hours=7)
 st.write(f"### 📅 {bay_gio.strftime('Ngày %d tháng %m năm %Y')}")
 st.markdown("---")
 
-LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYvwv9oTw/edit?gid=0#gid=0"
+LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYww9oTw/edit"
 
 @st.cache_resource
 def ket_noi_sheets():
@@ -69,7 +69,7 @@ with tab1:
 
     if st.button("Ghi sổ Trà Tắc", use_container_width=True, type="primary"):
         if so_tien > 0:
-            worksheet.append_row([str(uuid.uuid4())[:8], datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Trà tắc", "Thu" if "Thu" in loai else "Chi", hinh_thuc, ten_khach, so_tien * 1000])
+            worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Trà tắc", "Thu" if "Thu" in loai else "Chi", hinh_thuc, ten_khach, so_tien * 1000])
             st.success("Đã lưu thành công!")
             st.rerun()
     
@@ -88,7 +88,7 @@ with tab2:
 
     if st.button("Ghi sổ Giặt Sấy", use_container_width=True, type="primary"):
         if so_tien_gs > 0:
-            worksheet.append_row([str(uuid.uuid4())[:8], datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Giặt sấy", "Thu" if "Thu" in loai_gs else "Chi", hinh_thuc_gs, ten_khach_gs, so_tien_gs * 1000])
+            worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Giặt sấy", "Thu" if "Thu" in loai_gs else "Chi", hinh_thuc_gs, ten_khach_gs, so_tien_gs * 1000])
             st.rerun()
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Giặt sấy")
@@ -105,7 +105,7 @@ with tab3:
 
     if st.button("Ghi sổ Sửa Đồ", use_container_width=True, type="primary"):
         if so_tien_sd > 0:
-            worksheet.append_row([str(uuid.uuid4())[:8], datetime.now().strftime("%d/%m/%Y %H:%M:%S"), "Sửa đồ", "Thu", hinh_thuc_sd, ten_khach_sd, so_tien_sd * 1000])
+            worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Sửa đồ", "Thu", hinh_thuc_sd, ten_khach_sd, so_tien_sd * 1000])
             st.rerun()
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Sửa đồ")
