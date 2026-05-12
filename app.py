@@ -139,7 +139,6 @@ with tab1:
 
     st.header("🥤 Quản lý Trà Tắc")
 
-    # Đưa Chọn món ra ngoài Form để giá tiền nhảy ngay lập tức
     ds_mon = {
         "Chọn Đồ Uống": 0,
         "Trà tắc (10k)": 10,
@@ -152,7 +151,6 @@ with tab1:
         list(ds_mon.keys())
     )
 
-    # Đặt clear_on_submit=True để ghi sổ xong thì form tự động dọn sạch số liệu
     with st.form("form_tra_tac", clear_on_submit=True):
 
         col_a, col_b = st.columns(2)
@@ -216,6 +214,9 @@ with tab1:
                 st.cache_data.clear()
 
                 st.success("Đã lưu thành công!")
+                
+                # Ép tải lại dữ liệu mới nhất ngay sau khi lưu
+                df_all = lay_du_lieu()
 
     hien_thi_lich_su_tab(df_all, "Trà tắc")
 
@@ -282,6 +283,9 @@ with tab2:
                 st.cache_data.clear()
 
                 st.success("Đã lưu thành công!")
+                
+                # Ép tải lại dữ liệu mới nhất ngay sau khi lưu
+                df_all = lay_du_lieu()
 
     hien_thi_lich_su_tab(df_all, "Giặt sấy")
 
@@ -343,6 +347,9 @@ with tab3:
                 st.cache_data.clear()
 
                 st.success("Đã lưu thành công!")
+                
+                # Ép tải lại dữ liệu mới nhất ngay sau khi lưu
+                df_all = lay_du_lieu()
 
     hien_thi_lich_su_tab(df_all, "Sửa đồ")
 
