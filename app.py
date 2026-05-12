@@ -13,8 +13,8 @@ bay_gio = datetime.now() + timedelta(hours=7)
 st.write(f"### 📅 {bay_gio.strftime('Ngày %d tháng %m năm %Y')}")
 st.markdown("---")
 
-# TỐI ƯU 1: Dùng ID thay vì Link đầy đủ để tăng tốc độ kết nối
-SHEET_ID = "1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYww9oTw"
+# DÙNG LINK ĐẦY ĐỦ THEO YÊU CẦU CỦA BẠN
+LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYww9oTw/edit?pli=1&gid=0#gid=0"
 
 # --- KẾT NỐI GOOGLE SHEETS ---
 @st.cache_resource
@@ -22,7 +22,11 @@ def ket_noi_sheets():
     try:
         creds_dict = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds_dict)
-        sh = gc.open_by_key(SHEET_ID) # Mở trực tiếp bằng ID
+        
+        # Tự động cắt phần đuôi rườm rà để tránh lỗi 404
+        link_chuan = LINK_GOOGLE_SHEETS.split("?")[0] 
+        sh = gc.open_by_url(link_chuan)
+        
         return sh.sheet1
     except Exception as e:
         st.error(f"Lỗi kết nối chi tiết: {e}")
@@ -31,7 +35,7 @@ def ket_noi_sheets():
 worksheet = ket_noi_sheets()
 
 # --- LOAD DỮ LIỆU ---
-@st.cache_data(ttl=5) # Giữ bộ nhớ đệm 5 giây để giảm tải mạng
+@st.cache_data(ttl=5) 
 def lay_du_lieu():
     data = worksheet.get_all_records()
     if not data:
