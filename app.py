@@ -434,6 +434,9 @@ with tab4:
                 .sum()
                 .reset_index()
             )
+            
+            # Ép kiểu 'Ngày' sang dạng chữ để Plotly không bị lỗi hiển thị khi chỉ có 1 ngày
+            df_doanh_thu['Ngày'] = df_doanh_thu['Ngày'].astype(str)
 
             fig = px.bar(
                 df_doanh_thu,
@@ -476,12 +479,11 @@ with tab4:
             )
 
         # =========================================================
-        # ĐOẠN CODE MỚI THÊM: TỔNG KẾT THEO THÁNG & NĂM
+        # TỔNG KẾT THEO THÁNG & NĂM
         # =========================================================
         st.write("---")
         st.subheader("🏆 Bảng Tổng Kết Theo Tháng & Năm")
         
-        # Dùng lại df_all để lấy toàn bộ lịch sử
         df_tk = df_all.copy()
         df_tk['Năm'] = df_tk['Thời Gian'].dt.year
         df_tk['Tháng'] = df_tk['Thời Gian'].dt.month
@@ -494,7 +496,6 @@ with tab4:
             thu_nam = df_nam[df_nam['Loại'] == 'Thu']['Số Tiền'].sum()
             chi_nam = df_nam[df_nam['Loại'] == 'Chi']['Số Tiền'].sum()
             
-            # Thêm dòng tổng Năm
             bang_tong_ket.append({
                 "Phân Loại": f"🌟 TỔNG NĂM {int(nam)}",
                 "Tổng Thu": f"{thu_nam:,.0f} đ",
@@ -502,14 +503,12 @@ with tab4:
                 "Lợi Nhuận": f"{thu_nam - chi_nam:,.0f} đ"
             })
             
-            # Lọc theo từng tháng trong năm đó
             cac_thang = sorted(df_nam['Tháng'].dropna().unique(), reverse=True)
             for thang in cac_thang:
                 df_thang = df_nam[df_nam['Tháng'] == thang]
                 thu_thang = df_thang[df_thang['Loại'] == 'Thu']['Số Tiền'].sum()
                 chi_thang = df_thang[df_thang['Loại'] == 'Chi']['Số Tiền'].sum()
                 
-                # Thêm dòng tổng Tháng
                 bang_tong_ket.append({
                     "Phân Loại": f"Tháng {int(thang)}/{int(nam)}",
                     "Tổng Thu": f"{thu_thang:,.0f} đ",
