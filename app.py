@@ -426,34 +426,24 @@ with tab4:
 
             st.write("---")
 
-            st.subheader("📊 Biểu đồ lợi nhuận")
-
-            # Tính toán Lợi nhuận (Thu - Chi) theo từng ngày
-            df_loi_nhuan = df_loc.groupby(['Ngày', 'Loại'])['Số Tiền'].sum().unstack(fill_value=0).reset_index()
+            # =========================================================
+            # THAY THẾ BIỂU ĐỒ BẰNG TỔNG LỢI NHUẬN TỪNG DỊCH VỤ
+            # =========================================================
+            st.subheader("🏆 Lợi Nhuận Từng Dịch Vụ")
             
-            # Đảm bảo có đủ cột Thu, Chi để không bị lỗi nếu ngày đó chỉ có Thu hoặc chỉ có Chi
-            if 'Thu' not in df_loi_nhuan.columns:
-                df_loi_nhuan['Thu'] = 0
-            if 'Chi' not in df_loi_nhuan.columns:
-                df_loi_nhuan['Chi'] = 0
-                
-            df_loi_nhuan['Lợi Nhuận'] = df_loi_nhuan['Thu'] - df_loi_nhuan['Chi']
+            # Hàm tính nhanh lợi nhuận theo dịch vụ
+            def tinh_loi_nhuan_dv(ten_dv):
+                df_dv = df_loc[df_loc['Dịch Vụ'] == ten_dv]
+                thu = df_dv[df_dv['Loại'] == 'Thu']['Số Tiền'].sum()
+                chi = df_dv[df_dv['Loại'] == 'Chi']['Số Tiền'].sum()
+                return thu - chi
 
-            # Ép kiểu 'Ngày' sang dạng chữ để Plotly không bị lỗi hiển thị khi chỉ có 1 ngày
-            df_loi_nhuan['Ngày'] = df_loi_nhuan['Ngày'].astype(str)
+            col_tt, col_gs, col_sd = st.columns(3)
+            col_tt.info(f"🥤 **Trà tắc:**\n\n### {tinh_loi_nhuan_dv('Trà tắc'):,.0f}đ")
+            col_gs.info(f"🧺 **Giặt sấy:**\n\n### {tinh_loi_nhuan_dv('Giặt sấy'):,.0f}đ")
+            col_sd.info(f"🛠️ **Sửa đồ:**\n\n### {tinh_loi_nhuan_dv('Sửa đồ'):,.0f}đ")
 
-            fig = px.bar(
-                df_loi_nhuan,
-                x='Ngày',
-                y='Lợi Nhuận',
-                title="Lợi nhuận tổng theo ngày",
-                text_auto='.2s'
-            )
-
-            st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
+            st.write("---")
 
             st.subheader("📑 Lịch sử giao dịch")
 
@@ -479,50 +469,6 @@ with tab4:
             st.warning(
                 "Không có giao dịch nào trong khoảng thời gian đã chọn."
             )
-
-        # =========================================================
-        # TỔNG KẾT THEO THÁNG & NĂM
-        # =========================================================
-        st.write("---")
-        st.subheader("🏆 Bảng Tổng Kết Theo Tháng & Năm")
-        
-        df_tk = df_all.copy()
-        df_tk['Năm'] = df_tk['Thời Gian'].dt.year
-        df_tk['Tháng'] = df_tk['Thời Gian'].dt.month
-        
-        bang_tong_ket = []
-        cac_nam = sorted(df_tk['Năm'].dropna().unique(), reverse=True)
-        
-        for nam in cac_nam:
-            df_nam = df_tk[df_tk['Năm'] == nam]
-            thu_nam = df_nam[df_nam['Loại'] == 'Thu']['Số Tiền'].sum()
-            chi_nam = df_nam[df_nam['Loại'] == 'Chi']['Số Tiền'].sum()
-            
-            bang_tong_ket.append({
-                "Phân Loại": f"🌟 TỔNG NĂM {int(nam)}",
-                "Tổng Thu": f"{thu_nam:,.0f} đ",
-                "Tổng Chi": f"{chi_nam:,.0f} đ",
-                "Lợi Nhuận": f"{thu_nam - chi_nam:,.0f} đ"
-            })
-            
-            cac_thang = sorted(df_nam['Tháng'].dropna().unique(), reverse=True)
-            for thang in cac_thang:
-                df_thang = df_nam[df_nam['Tháng'] == thang]
-                thu_thang = df_thang[df_thang['Loại'] == 'Thu']['Số Tiền'].sum()
-                chi_thang = df_thang[df_thang['Loại'] == 'Chi']['Số Tiền'].sum()
-                
-                bang_tong_ket.append({
-                    "Phân Loại": f"Tháng {int(thang)}/{int(nam)}",
-                    "Tổng Thu": f"{thu_thang:,.0f} đ",
-                    "Tổng Chi": f"{chi_thang:,.0f} đ",
-                    "Lợi Nhuận": f"{thu_thang - chi_thang:,.0f} đ"
-                })
-        
-        if bang_tong_ket:
-            df_hien_thi = pd.DataFrame(bang_tong_ket)
-            st.dataframe(df_hien_thi, use_container_width=True)
-        else:
-            st.info("Chưa có dữ liệu để tổng kết.")
 
     else:
 
