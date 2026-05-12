@@ -215,7 +215,6 @@ with tab1:
 
                 st.success("Đã lưu thành công!")
                 
-                # Ép tải lại dữ liệu mới nhất ngay sau khi lưu
                 df_all = lay_du_lieu()
 
     hien_thi_lich_su_tab(df_all, "Trà tắc")
@@ -284,7 +283,6 @@ with tab2:
 
                 st.success("Đã lưu thành công!")
                 
-                # Ép tải lại dữ liệu mới nhất ngay sau khi lưu
                 df_all = lay_du_lieu()
 
     hien_thi_lich_su_tab(df_all, "Giặt sấy")
@@ -348,7 +346,6 @@ with tab3:
 
                 st.success("Đã lưu thành công!")
                 
-                # Ép tải lại dữ liệu mới nhất ngay sau khi lưu
                 df_all = lay_du_lieu()
 
     hien_thi_lich_su_tab(df_all, "Sửa đồ")
@@ -477,6 +474,54 @@ with tab4:
             st.warning(
                 "Không có giao dịch nào trong khoảng thời gian đã chọn."
             )
+
+        # =========================================================
+        # ĐOẠN CODE MỚI THÊM: TỔNG KẾT THEO THÁNG & NĂM
+        # =========================================================
+        st.write("---")
+        st.subheader("🏆 Bảng Tổng Kết Theo Tháng & Năm")
+        
+        # Dùng lại df_all để lấy toàn bộ lịch sử
+        df_tk = df_all.copy()
+        df_tk['Năm'] = df_tk['Thời Gian'].dt.year
+        df_tk['Tháng'] = df_tk['Thời Gian'].dt.month
+        
+        bang_tong_ket = []
+        cac_nam = sorted(df_tk['Năm'].dropna().unique(), reverse=True)
+        
+        for nam in cac_nam:
+            df_nam = df_tk[df_tk['Năm'] == nam]
+            thu_nam = df_nam[df_nam['Loại'] == 'Thu']['Số Tiền'].sum()
+            chi_nam = df_nam[df_nam['Loại'] == 'Chi']['Số Tiền'].sum()
+            
+            # Thêm dòng tổng Năm
+            bang_tong_ket.append({
+                "Phân Loại": f"🌟 TỔNG NĂM {int(nam)}",
+                "Tổng Thu": f"{thu_nam:,.0f} đ",
+                "Tổng Chi": f"{chi_nam:,.0f} đ",
+                "Lợi Nhuận": f"{thu_nam - chi_nam:,.0f} đ"
+            })
+            
+            # Lọc theo từng tháng trong năm đó
+            cac_thang = sorted(df_nam['Tháng'].dropna().unique(), reverse=True)
+            for thang in cac_thang:
+                df_thang = df_nam[df_nam['Tháng'] == thang]
+                thu_thang = df_thang[df_thang['Loại'] == 'Thu']['Số Tiền'].sum()
+                chi_thang = df_thang[df_thang['Loại'] == 'Chi']['Số Tiền'].sum()
+                
+                # Thêm dòng tổng Tháng
+                bang_tong_ket.append({
+                    "Phân Loại": f"Tháng {int(thang)}/{int(nam)}",
+                    "Tổng Thu": f"{thu_thang:,.0f} đ",
+                    "Tổng Chi": f"{chi_thang:,.0f} đ",
+                    "Lợi Nhuận": f"{thu_thang - chi_thang:,.0f} đ"
+                })
+        
+        if bang_tong_ket:
+            df_hien_thi = pd.DataFrame(bang_tong_ket)
+            st.dataframe(df_hien_thi, use_container_width=True)
+        else:
+            st.info("Chưa có dữ liệu để tổng kết.")
 
     else:
 
