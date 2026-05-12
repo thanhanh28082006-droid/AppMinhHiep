@@ -13,7 +13,7 @@ bay_gio = datetime.now() + timedelta(hours=7)
 st.write(f"### 📅 {bay_gio.strftime('Ngày %d tháng %m năm %Y')}")
 st.markdown("---")
 
-LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYww9oTw/edit?gid=0#gid=0"
+LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYvwv9oTw/edit?pli=1&gid=0#gid=0"
 
 @st.cache_resource
 def ket_noi_sheets():
