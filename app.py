@@ -426,25 +426,27 @@ with tab4:
 
             st.write("---")
 
-            st.subheader("📊 Biểu đồ doanh thu")
+            st.subheader("📊 Biểu đồ lợi nhuận")
 
-            df_doanh_thu = (
-                df_loc[df_loc['Loại'] == 'Thu']
-                .groupby(['Ngày', 'Dịch Vụ'])['Số Tiền']
-                .sum()
-                .reset_index()
-            )
+            # Tính toán Lợi nhuận (Thu - Chi) theo từng ngày
+            df_loi_nhuan = df_loc.groupby(['Ngày', 'Loại'])['Số Tiền'].sum().unstack(fill_value=0).reset_index()
             
+            # Đảm bảo có đủ cột Thu, Chi để không bị lỗi nếu ngày đó chỉ có Thu hoặc chỉ có Chi
+            if 'Thu' not in df_loi_nhuan.columns:
+                df_loi_nhuan['Thu'] = 0
+            if 'Chi' not in df_loi_nhuan.columns:
+                df_loi_nhuan['Chi'] = 0
+                
+            df_loi_nhuan['Lợi Nhuận'] = df_loi_nhuan['Thu'] - df_loi_nhuan['Chi']
+
             # Ép kiểu 'Ngày' sang dạng chữ để Plotly không bị lỗi hiển thị khi chỉ có 1 ngày
-            df_doanh_thu['Ngày'] = df_doanh_thu['Ngày'].astype(str)
+            df_loi_nhuan['Ngày'] = df_loi_nhuan['Ngày'].astype(str)
 
             fig = px.bar(
-                df_doanh_thu,
+                df_loi_nhuan,
                 x='Ngày',
-                y='Số Tiền',
-                color='Dịch Vụ',
-                title="Doanh thu theo dịch vụ",
-                barmode='stack',
+                y='Lợi Nhuận',
+                title="Lợi nhuận tổng theo ngày",
                 text_auto='.2s'
             )
 
