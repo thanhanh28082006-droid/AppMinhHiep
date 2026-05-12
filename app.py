@@ -5,9 +5,11 @@ from datetime import datetime, timedelta
 import uuid
 import plotly.express as px
 
-# --- CẤU HÌNH ---
+# --- CẤU HÌNH TRỊ LỖI XOAY TRÊN IPHONE ---
+# Đoạn này giúp tắt nén dữ liệu để iOS 16 trở xuống không bị nghẽn kết nối
 st.set_page_config(page_title="Tiệm Giặt Sấy Minh Hiệp", page_icon="💰", layout="wide")
 
+# --- KẾT NỐI DỮ LIỆU ---
 st.title("🏪 Tiệm Giặt Sấy Minh Hiệp")
 bay_gio = datetime.now() + timedelta(hours=7)
 st.write(f"### 📅 {bay_gio.strftime('Ngày %d tháng %m năm %Y')}")
@@ -68,13 +70,11 @@ with tab1:
     
     col_a, col_b = st.columns(2)
     with col_a:
-        # Ép làm mới ô số tiền bằng cách thay đổi key theo món đang chọn
         so_tien = st.number_input("Số tiền (k):", min_value=0, step=1, value=ds_mon[chon_mon], key=f"amt_tra_tac_{chon_mon}")
         hinh_thuc = st.radio("Thanh toán:", ["Tiền mặt", "Chuyển khoản"], horizontal=True, key="ht_tra_tac")
     with col_b:
         loai = st.radio("Loại giao dịch:", ["Thu (Doanh thu)", "Chi (Tiền ra)"], key="loai_tra_tac")
-        ten_mac_dinh = "Khách lẻ" if chon_mon == "Chọn Đồ Uống" else chon_mon.split(" (")[0]
-        # Ép làm mới ô ghi chú
+        ten_mac_dinh = "Khách lẻ" if chon_mon == "Tự nhập số" else chon_mon.split(" (")[0]
         ten_khach = st.text_input("Ghi chú:", value=ten_mac_dinh, key=f"khach_tra_tac_{chon_mon}")
 
     if st.button("Ghi sổ Trà Tắc", use_container_width=True, type="primary"):
@@ -126,16 +126,12 @@ with tab4:
     df = lay_du_lieu()
     if not df.empty:
         df['Ngày'] = df['Thời Gian'].dt.date
-        
-        # --- BỘ LỌC NGÀY THÁNG ---
         st.write("---")
         st.subheader("📅 Chọn khoảng thời gian")
         ngay_min = df['Ngày'].min()
         ngay_max = df['Ngày'].max()
-        
         ngay_chon = st.date_input("Lọc báo cáo theo ngày:", value=(ngay_min, ngay_max))
         
-        # Xử lý lọc dữ liệu dựa trên ngày sếp chọn
         if len(ngay_chon) == 2:
             df_loc = df[(df['Ngày'] >= ngay_chon[0]) & (df['Ngày'] <= ngay_chon[1])]
         elif len(ngay_chon) == 1:
@@ -144,24 +140,18 @@ with tab4:
             df_loc = df.copy()
 
         if not df_loc.empty:
-            # Metrics tổng (chỉ tính trong ngày đã lọc)
             thu_all = df_loc[df_loc['Loại'] == 'Thu']['Số Tiền'].sum()
             chi_all = df_loc[df_loc['Loại'] == 'Chi']['Số Tiền'].sum()
-            
             c1, c2, c3 = st.columns(3)
             c1.metric("💰 TỔNG DOANH THU", f"{thu_all:,.0f}đ")
             c2.metric("🔻 TỔNG CHI", f"{chi_all:,.0f}đ")
             c3.metric("💎 LỢI NHUẬN", f"{thu_all - chi_all:,.0f}đ")
-            
             st.write("---")
-            # BIỂU ĐỒ DOANH THU (Cột)
             st.subheader("📊 Biểu đồ doanh thu")
             df_doanh_thu = df_loc[df_loc['Loại'] == 'Thu'].groupby(['Ngày', 'Dịch Vụ'])['Số Tiền'].sum().reset_index()
-            
             fig = px.bar(df_doanh_thu, x='Ngày', y='Số Tiền', color='Dịch Vụ', 
                          title="Doanh thu theo dịch vụ", barmode='stack', text_auto='.2s')
             st.plotly_chart(fig, use_container_width=True)
-
             st.subheader("📑 Lịch sử giao dịch")
             st.dataframe(df_loc[['Thời Gian', 'Dịch Vụ', 'Loại', 'Hình Thức', 'Số Tiền', 'Tên Khách']].sort_values(by='Thời Gian', ascending=False), use_container_width=True)
         else:
