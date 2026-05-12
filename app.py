@@ -29,6 +29,8 @@ except Exception as e:
     st.error(f"Lỗi kết nối chi tiết: {e}")
     st.stop()
 
+# --- CHỖ SỬA SỐ 1: BẬT BỘ NHỚ ĐỆM (CACHE) ---
+@st.cache_data(ttl=120) 
 def lay_du_lieu():
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
@@ -40,6 +42,9 @@ def lay_du_lieu():
         df['Số Tiền'] = pd.to_numeric(df['Số Tiền'], errors='coerce').fillna(0)
         df['Thời Gian'] = pd.to_datetime(df['Thời Gian'], format="%d/%m/%Y %H:%M:%S", errors='coerce')
     return df
+
+# --- CHỖ SỬA SỐ 2: TẢI DỮ LIỆU ĐÚNG 1 LẦN DÙNG CHO TOÀN BỘ APP ---
+df_main = lay_du_lieu()
 
 # --- GIAO DIỆN TABS ---
 tab1, tab2, tab3, tab4 = st.tabs(["🥤 Trà Tắc", "🧺 Giặt Sấy", "🛠️ Sửa Đồ", "📈 Tổng thu"])
@@ -81,9 +86,10 @@ with tab1:
         if so_tien > 0:
             worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Trà tắc", "Thu" if "Thu" in loai else "Chi", hinh_thuc, ten_khach, so_tien * 1000])
             st.success("Đã lưu thành công!")
+            st.cache_data.clear() # CHỖ SỬA SỐ 3: XÓA ĐỆM KHI GHI SỔ
             st.rerun()
     
-    hien_thi_lich_su_tab(lay_du_lieu(), "Trà tắc")
+    hien_thi_lich_su_tab(df_main, "Trà tắc")
 
 # --- TAB 2: GIẶT SẤY ---
 with tab2:
@@ -99,9 +105,10 @@ with tab2:
     if st.button("Ghi sổ Giặt Sấy", use_container_width=True, type="primary"):
         if so_tien_gs > 0:
             worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Giặt sấy", "Thu" if "Thu" in loai_gs else "Chi", hinh_thuc_gs, ten_khach_gs, so_tien_gs * 1000])
+            st.cache_data.clear() # CHỖ SỬA SỐ 3
             st.rerun()
     
-    hien_thi_lich_su_tab(lay_du_lieu(), "Giặt sấy")
+    hien_thi_lich_su_tab(df_main, "Giặt sấy")
 
 # --- TAB 3: SỬA ĐỒ ---
 with tab3:
@@ -116,14 +123,15 @@ with tab3:
     if st.button("Ghi sổ Sửa Đồ", use_container_width=True, type="primary"):
         if so_tien_sd > 0:
             worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Sửa đồ", "Thu", hinh_thuc_sd, ten_khach_sd, so_tien_sd * 1000])
+            st.cache_data.clear() # CHỖ SỬA SỐ 3
             st.rerun()
     
-    hien_thi_lich_su_tab(lay_du_lieu(), "Sửa đồ")
+    hien_thi_lich_su_tab(df_main, "Sửa đồ")
 
 # --- TAB 4: BÁO CÁO ---
 with tab4:
     st.header("📈 Tổng Doanh Thu")
-    df = lay_du_lieu()
+    df = df_main # Dùng lại dữ liệu đã tải 1 lần ở trên
     if not df.empty:
         df['Ngày'] = df['Thời Gian'].dt.date
         
@@ -132,7 +140,6 @@ with tab4:
         st.subheader("📅 Chọn khoảng thời gian")
         ngay_min = df['Ngày'].min()
         ngay_max = df['Ngày'].max()
-        
         
         ngay_chon = st.date_input("Lọc báo cáo theo ngày:", value=(ngay_min, ngay_max))
         
