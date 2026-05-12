@@ -13,7 +13,7 @@ bay_gio = datetime.now() + timedelta(hours=7)
 st.write(f"### 📅 {bay_gio.strftime('Ngày %d tháng %m năm %Y')}")
 st.markdown("---")
 
-LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYvwv9oTw/edit?gid=0#gid=0"
+LINK_GOOGLE_SHEETS = "https://docs.google.com/spreadsheets/d/1rNjsqV3OUNtQeYd4OXAb3oNuPrpPj6jv2wZYvwv9oTw/edit?pli=1&gid=0#gid=0"
 
 @st.cache_resource
 def ket_noi_sheets():
@@ -29,8 +29,6 @@ except Exception as e:
     st.error(f"Lỗi kết nối chi tiết: {e}")
     st.stop()
 
-# ---> THÊM DÒNG NÀY ĐỂ MÁY YẾU KHÔNG BỊ TREO <---
-@st.cache_data(ttl=120) 
 def lay_du_lieu():
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
@@ -83,7 +81,6 @@ with tab1:
         if so_tien > 0:
             worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Trà tắc", "Thu" if "Thu" in loai else "Chi", hinh_thuc, ten_khach, so_tien * 1000])
             st.success("Đã lưu thành công!")
-            st.cache_data.clear() # ---> THÊM DÒNG NÀY ĐỂ APP LÀM MỚI SỐ LIỆU SAU KHI GHI <---
             st.rerun()
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Trà tắc")
@@ -102,7 +99,6 @@ with tab2:
     if st.button("Ghi sổ Giặt Sấy", use_container_width=True, type="primary"):
         if so_tien_gs > 0:
             worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Giặt sấy", "Thu" if "Thu" in loai_gs else "Chi", hinh_thuc_gs, ten_khach_gs, so_tien_gs * 1000])
-            st.cache_data.clear() # ---> THÊM DÒNG NÀY <---
             st.rerun()
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Giặt sấy")
@@ -120,7 +116,6 @@ with tab3:
     if st.button("Ghi sổ Sửa Đồ", use_container_width=True, type="primary"):
         if so_tien_sd > 0:
             worksheet.append_row([str(uuid.uuid4())[:8], (datetime.now() + timedelta(hours=7)).strftime("%d/%m/%Y %H:%M:%S"), "Sửa đồ", "Thu", hinh_thuc_sd, ten_khach_sd, so_tien_sd * 1000])
-            st.cache_data.clear() # ---> THÊM DÒNG NÀY <---
             st.rerun()
     
     hien_thi_lich_su_tab(lay_du_lieu(), "Sửa đồ")
