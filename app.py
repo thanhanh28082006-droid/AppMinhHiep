@@ -479,6 +479,29 @@ with tab4:
                 use_container_width=True
             )
 
+            st.write("---")
+            st.subheader("📅 Tổng Lợi Nhuận Theo Từng Tháng")
+            
+            df_thang = df.copy() # Lấy toàn bộ dữ liệu (không bị ảnh hưởng bởi bộ lọc ngày) để tính theo tháng
+            df_thang['Năm-Tháng'] = df_thang['Thời Gian'].dt.strftime('%Y-%m')
+            
+            bang_thang = []
+            for nm_th in sorted(df_thang['Năm-Tháng'].dropna().unique(), reverse=True):
+                df_t = df_thang[df_thang['Năm-Tháng'] == nm_th]
+                t_thu = df_t[df_t['Loại'] == 'Thu']['Số Tiền'].sum()
+                t_chi = df_t[df_t['Loại'] == 'Chi']['Số Tiền'].sum()
+                thang_hien_thi = datetime.strptime(nm_th, '%Y-%m').strftime('%m/%Y')
+                
+                bang_thang.append({
+                    "Tháng": thang_hien_thi,
+                    "Tổng Thu": f"{t_thu:,.0f}đ",
+                    "Tổng Chi": f"{t_chi:,.0f}đ",
+                    "Lợi Nhuận": f"{t_thu - t_chi:,.0f}đ"
+                })
+            
+            if bang_thang:
+                st.dataframe(pd.DataFrame(bang_thang), use_container_width=True)
+
         else:
 
             st.warning(
