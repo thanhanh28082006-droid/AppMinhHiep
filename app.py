@@ -104,12 +104,19 @@ def hien_thi_lich_su_tab(df, ten_dv):
 
         tong_chi = df_dv[df_dv['Loại'] == 'Chi']['Số Tiền'].sum()
 
+        thu_tm = df_dv[(df_dv['Loại'] == 'Thu') & (df_dv['Hình Thức'] == 'Tiền mặt')]['Số Tiền'].sum()
+        chi_tm = df_dv[(df_dv['Loại'] == 'Chi') & (df_dv['Hình Thức'] == 'Tiền mặt')]['Số Tiền'].sum()
+        
+        thu_ck = df_dv[(df_dv['Loại'] == 'Thu') & (df_dv['Hình Thức'] == 'Chuyển khoản')]['Số Tiền'].sum()
+        chi_ck = df_dv[(df_dv['Loại'] == 'Chi') & (df_dv['Hình Thức'] == 'Chuyển khoản')]['Số Tiền'].sum()
+
         st.write("---")
 
         st.info(
             f"💰 **Tổng lợi nhuận {ten_dv}: "
             f"{tong_thu - tong_chi:,.0f}đ** "
-            f"(Thu: {tong_thu:,.0f}đ | Chi: {tong_chi:,.0f}đ)"
+            f"(Thu: {tong_thu:,.0f}đ | Chi: {tong_chi:,.0f}đ)\n\n"
+            f"💵 **Tiền mặt:** {thu_tm - chi_tm:,.0f}đ | 💳 **Chuyển khoản:** {thu_ck - chi_ck:,.0f}đ"
         )
 
         st.write(f"🔔 **Đơn hàng {ten_dv} vừa nhập:**")
@@ -407,6 +414,12 @@ with tab4:
                 df_loc['Loại'] == 'Chi'
             ]['Số Tiền'].sum()
 
+            thu_tm_all = df_loc[(df_loc['Loại'] == 'Thu') & (df_loc['Hình Thức'] == 'Tiền mặt')]['Số Tiền'].sum()
+            chi_tm_all = df_loc[(df_loc['Loại'] == 'Chi') & (df_loc['Hình Thức'] == 'Tiền mặt')]['Số Tiền'].sum()
+
+            thu_ck_all = df_loc[(df_loc['Loại'] == 'Thu') & (df_loc['Hình Thức'] == 'Chuyển khoản')]['Số Tiền'].sum()
+            chi_ck_all = df_loc[(df_loc['Loại'] == 'Chi') & (df_loc['Hình Thức'] == 'Chuyển khoản')]['Số Tiền'].sum()
+
             c1, c2, c3 = st.columns(3)
 
             c1.metric(
@@ -423,6 +436,8 @@ with tab4:
                 "💎 LỢI NHUẬN",
                 f"{thu_all - chi_all:,.0f}đ"
             )
+
+            st.info(f"💵 **Tổng Tiền mặt:** {thu_tm_all - chi_tm_all:,.0f}đ | 💳 **Tổng Chuyển khoản:** {thu_ck_all - chi_ck_all:,.0f}đ")
 
             st.write("---")
 
