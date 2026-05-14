@@ -98,7 +98,11 @@ def hien_thi_lich_su_tab(df, ten_dv):
 
     if not df.empty:
 
-        df_dv = df[df['Dịch Vụ'] == ten_dv]
+        # Lấy ngày hôm nay
+        hom_nay = (datetime.now() + timedelta(hours=7)).date()
+
+        # Lọc dữ liệu theo dịch vụ VÀ chỉ lấy ngày hôm nay
+        df_dv = df[(df['Dịch Vụ'] == ten_dv) & (df['Thời Gian'].dt.date == hom_nay)]
 
         tong_thu = df_dv[df_dv['Loại'] == 'Thu']['Số Tiền'].sum()
 
@@ -113,13 +117,13 @@ def hien_thi_lich_su_tab(df, ten_dv):
         st.write("---")
 
         st.info(
-            f"💰 **Tổng lợi nhuận {ten_dv}: "
+            f"💰 **Tổng lợi nhuận {ten_dv} hôm nay: "
             f"{tong_thu - tong_chi:,.0f}đ** "
             f"(Thu: {tong_thu:,.0f}đ | Chi: {tong_chi:,.0f}đ)\n\n"
             f"💵 **Tiền mặt:** {thu_tm - chi_tm:,.0f}đ | 💳 **Chuyển khoản:** {thu_ck - chi_ck:,.0f}đ"
         )
 
-        st.write(f"🔔 **Đơn hàng {ten_dv} vừa nhập:**")
+        st.write(f"🔔 **Đơn hàng {ten_dv} vừa nhập hôm nay:**")
 
         df_loc = df_dv.sort_values(
             by='Thời Gian',
